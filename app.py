@@ -3,12 +3,18 @@ import streamlit as st
 import plotly.express as px
 import numpy as np
 
+# The following customization requires upgraded streamlit
+# st.beta_set_page_config(
+#     page_title="Voting System Simulation",
+#     page_icon="🧊",
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+# )
+
 @st.cache
 def get_data():
     # get data and store
-    range = 50
-    num_points = 100
-    data = pd.DataFrame(np.random.randint(-range, range, size=(num_points, 2)), columns=list('XY'))
+    data = pd.read_csv("random_xy_data.csv")
     return data
 
 df = get_data()
@@ -20,7 +26,10 @@ st.header("header")
 st.markdown("more mark down text")
 
 st.dataframe(df)
-st.markdown(df.size)
+st.markdown(df.shape)
+st.markdown(df.columns)
 
-fig = px.scatter(df, x="X", y="Y")
+fig = px.scatter(df, x="x_preference", y="y_preference")
 st.plotly_chart(fig)
+
+# https://towardsdatascience.com/streamlit-101-an-in-depth-introduction-fc8aad9492f2
