@@ -63,8 +63,9 @@ st.markdown("The first election method we will look at is the instant run-off el
 st.markdown("Simply put, we let everyone choose which candidate they like best. And in the end, we count all the votes to see which candidate has the most votes.")
 st.markdown("let's create two imaginary candidates: Donavan Turn & James Byron")
 st.markdown("and here is where they lie on our political spectrum: ")
-candidate_one = (65, 80)
-candidate_two = (-20, -40)
+candidate_one = (50, 70)
+candidate_two = (-40, -20)
+candidate_three = (-50, -10)
 
 new_fig = fig
 new_fig.add_trace(
@@ -101,6 +102,23 @@ new_fig.add_trace(
         showlegend=False
     )
 )
+new_fig.add_trace(
+    go.Scatter(
+        mode='markers',
+        x=[candidate_three[0]],
+        y=[candidate_three[1]],
+        marker=dict(
+            color='rgba(255,127,80,0.3)',
+            size=30,
+            line=dict(
+                color='DarkSlateBlue',
+                width=1
+            )
+        ),
+        text="Candidate Three",
+        showlegend=False
+    )
+)
 
 st.plotly_chart(new_fig)
 
@@ -113,11 +131,26 @@ df_copy = df.copy()
 # denoting the first candidate as A, and the second one as B
 df_copy["distance_to_A"] = np.sqrt((df_copy["x_preference"]-candidate_one[0])**2 + (df_copy["y_preference"]-candidate_one[1])**2)
 df_copy["distance_to_B"] = np.sqrt((df_copy["x_preference"]-candidate_two[0])**2 + (df_copy["y_preference"]-candidate_two[1])**2)
+df_copy["distance_to_C"] = np.sqrt((df_copy["x_preference"]-candidate_three[0])**2 + (df_copy["y_preference"]-candidate_three[1])**2)
 
-df_copy["instant_run_off_choice"] = np.where(
-    df_copy["distance_to_A"] < df_copy["distance_to_B"],
-    "A",
-    "B")
+
+# df_copy["instant_run_off_choice"] = np.where(
+#     df_copy["distance_to_A"] < df_copy["distance_to_B"],
+#     "A",
+#     "B")
+
+def compare_distance(row):
+    min_distance = min(row["distance_to_A"], row["distance_to_B"], row["distance_to_C"])
+    if row["distance_to_A"] == min_distance:
+        return "A"
+    elif row["distance_to_B"] == min_distance:
+        return "B"
+    elif row["distance_to_C"] == min_distance:
+        return "C"
+    else:
+        return "NA"
+
+df_copy["instant_run_off_choice"] = df_copy.apply(compare_distance, axis=1)
 
 st.write(df_copy.head())
 print(id(data))
