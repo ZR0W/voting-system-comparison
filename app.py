@@ -3,6 +3,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objs as go
 import numpy as np
+import copy
 
 # The following customization requires upgraded streamlit
 # st.beta_set_page_config(
@@ -12,13 +13,18 @@ import numpy as np
 #     initial_sidebar_state="expanded",
 # )
 
-@st.cache
+# @st.cache(allow_output_mutation=True)
 def get_data():
     # get data and store
     data = pd.read_csv("random_xy_data.csv")
     return data
 
-df = get_data()
+# beware cache mutation issue
+# recourse: https://docs.streamlit.io/en/stable/troubleshooting/caching_issues.html
+
+data = get_data()
+df = data.copy()
+# df = copy.deepcopy(get_data())
 
 # page layout
 st.title("Political Spectrum Voting Method Simulation")
@@ -101,5 +107,41 @@ st.plotly_chart(new_fig)
 # use this to do that extra point on scatter plot thing:
 # https://plotly.com/python/marker-style/
 
+st.markdown("In this simplified graph, everyone would simply vote for the candicate closest to them on the political spectrum, being the one they agree with the msot.")
+
+df_copy = df.copy()
+# denoting the first candidate as A, and the second one as B
+df_copy["distance_to_A"] = np.sqrt((df_copy["x_preference"]-candidate_one[0])**2 + (df_copy["y_preference"]-candidate_one[1])**2)
+df_copy["distance_to_B"] = np.sqrt((df_copy["x_preference"]-candidate_two[0])**2 + (df_copy["y_preference"]-candidate_two[1])**2)
+
+df_copy["instant_run_off_choice"] = np.where(
+    df_copy["distance_to_A"] < df_copy["distance_to_B"],
+    "A",
+    "B")
+
+st.write(df_copy.head())
+print(id(data))
+print(id(df))
+print(id(df.copy))
+# TODO: dataframe mutation issue needs resolved
+
+st.markdown("We've now done some quick math to compute how close every point is to out two candicates. Through comparison, we know now how everyone is voting in the instand runoff election. If we plot that out to visualize it: ")
+
+fig_runoff = px.scatter(df_copy, x="x_preference", y="y_preference", color="instant_run_off_choice", 
+    labels={
+        "x_preference": "Apples(-) or Oranges(+)", 
+        "y_preference": "Pizza: With(-) or Without(+) Pineapple"
+    }, 
+    title="Population Political Spectrum Distribution",
+    hover_data=["distance_to_A", "distance_to_B"]
+)
+fig_runoff.update_traces(
+    marker=dict(
+        size=7,
+        line=dict(width=2, color="DarkSlateGrey")
+    ),
+    selector=dict(mode="markers")
+)
+st.plotly_chart(fig_runoff)
 
 # https://towardsdatascience.com/streamlit-101-an-in-depth-introduction-fc8aad9492f2
